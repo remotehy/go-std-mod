@@ -1,0 +1,47 @@
+# 利用 wire 工具进行编译期的依赖注入
+相关的材料参考: https://github.com/google/wire
+
+# wire 使用的几个关键点
+
+## wire.Build
+这个相当于就是最上层的 injector 了
+所有的 provider 最终都是在 wire.Build 这个 injector 这里进行汇聚的
+
+## wire.NewSet
+相当于就是把一组 provider 作为一个组来进行使用, 这样可以缩小 wire 的根据类型匹配的范围
+wire 可以根据这个 set 里面提供的 provider 来拼装一个更复杂的类型的 provider
+
+## wire.Bind:
+使用的场景就是, 可能你使用的地方形参是一个接口类型, 但是你需要传入的实参是一个 实际类型,
+那么就需要这个 wire.Bind 来协助这种绑定, 因为 wire 是通过类型来进行匹配的, 如果没有这种 Bind, wire 是无法明确知道这种映射关系的
+
+## wire.Struct
+就是说可以初始化某些结构的特定的字段
+注意一下, 对于同一个类型, struct provider 也就是 wire.Struct 不能和普通的通过函数的 provider 混用
+也就是说, 要么通过 provider 函数的方式初始化一个类型, 要么通过 wire.Struct 方式初始化一个类型, 不同混合使用
+
+## wire.FieldsOf
+就是说可以提取某些接口的特殊的 field 来作为一个单独的 provider
+它需要先提供一个可以提供原始数据的 provider
+然后再通过 wire.FieldsOf 来指定需要其中的哪些数据
+
+## wire.Value
+直接就创建对应的 value, 本质上也是一种 provider, 就是不需要用户写那种一次性的 providerFunc 了
+比如:
+type Foo int
+wire.Value(Foo(1))
+本质上其实等价于一个函数
+func NewFoo() Foo {
+    return Foo(1)
+}
+
+## wire.InterfaceValue
+直接就创建对应的 interface value, 本质上也是一种 provider, 就是不需要用户写那种一次性的 providerFunc 了
+比如: 某个位置需要一个 io.Reader 接口类型的参数, 那么可以在 wire.NewSet 里面写一个
+wire.InterfaceValue(new(io.Reader), os.Stdin)
+本质上其实等价于一个函数
+func NewIoReader() io.Reader{
+    var r io.Reader
+    r = os.Stdin
+    return r
+}

@@ -1,4 +1,4 @@
-package math
+package mymath
 
 import "github.com/remotehy/go-std-mod/internal/log"
 
